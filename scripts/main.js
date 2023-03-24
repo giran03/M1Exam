@@ -5,7 +5,7 @@ var config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 800 }
+            gravity: { y: 1000 }
         }
     },
     scene: {
@@ -21,7 +21,7 @@ platforms, platform,
 fruit, fruits,
 bomb, bombs,
 fruitCollected;
-let fruitCount = 8;
+let fruitCount = 4;
 let fruitsCollectedcount = 0;
 let fruitsCollectedText = 0;
 
@@ -44,6 +44,9 @@ function create ()
     // creating platforms using static group
     platforms = this.physics.add.staticGroup()
     platforms.enableBody = true
+    floatingPlatforms = this.physics.add.staticGroup()
+    floatingPlatforms.enableBody = true
+    
 
     for ( i = 0; i < 4; i ++)
     {
@@ -51,25 +54,19 @@ function create ()
             .setScale(.2)
             .refreshBody()      // required, to apply the changes made in static group
     }
-    platform = platforms.create(800, 400, 'platform')
-        .setScale(.08)
+    floatingPlatform = platforms.create(config.width / 9, 400, 'platform')
+        .setScale(.07)
         .refreshBody()
-    platform = platforms.create(1000, 250, 'platform')
-        .setScale(.08)
+    floatingPlatform = platforms.create(config.width / 2, 200, 'platform')
+        .setScale(.05)
         .refreshBody()
-    platform = platforms.create(-20, 200, 'platform')
-        .setScale(.08)
-        .refreshBody()
-    platform = platforms.create(500, 150, 'platform')
-        .setScale(.08)
-        .refreshBody()
-    platform = platforms.create(300, 450, 'platform')
-        .setScale(.08)
+    floatingPlatform = platforms.create(config.width / 1.1, 400, 'platform')
+        .setScale(.07)
         .refreshBody()
 
     // player added as sprite
     player = this.physics.add.sprite(100, 450, 'dude');
-    player.setBounce(.2);
+    player.setBounce(0,.2);
     player.setCollideWorldBounds(true);
     this.anims.create({
         key: 'left',
@@ -98,27 +95,20 @@ function create ()
     });
     fruits.children.iterate(function (child) {  // iterate all children then set bounceY between .4 and .8
         child.setBounceY(Phaser.Math.FloatBetween(0.8, 1));
-        // child.setScale(.3);
-        child.setScale(Phaser.Math.FloatBetween( .3, .5))
+        child.setScale(Phaser.Math.FloatBetween( .3, .6))
         child.y = Phaser.Math.Between(0,600);
-        child.x = Phaser.Math.Between(200,config.width);
+        child.x = Phaser.Math.Between(100,config.width - 10);
     });
 
-    bombs = this.physics.add.group({
-        key: 'bomb',
-        repeat: 0,
-        setXY: { x: 200, y: -200, stepX: 120 }
-    });
-    bombs.children.iterate(function (child) {  // iterate all children then set bounceY between .4 and .8
-        child.setBounceY(1);
-        child.setScale(.8);
-        child.setVelocity(Phaser.Math.Between(-200, 200), 20);
-        child.allowGravity = false;
-        child.setCollideWorldBounds(true);
-    });
+    bomb = this.physics.add.sprite(config.width / 2, 0, 'bomb');
+    bomb.setScale(.07);
+    bomb.setBounce(1,1);
+    bomb.setVelocity(200,200);
+    bomb.setCollideWorldBounds(true);
+    
 
     fruitCollected = this.add.text(config.width / 1.5, 20, 'Fruits Collected: 0', 
-    { fontSize: '25px', fill: '#ffbb00' , fontStyle: 'bold' , fontFamily: 'roboto'}); // fruits collected text
+    { fontSize: '40px', fill: '#ffd561' , fontStyle: 'bold' , fontFamily: 'impact'}); // fruits collected text
     fruitCollected.setShadow(2, 2, '#000', 2, true, true);
     cursors = this.input.keyboard.createCursorKeys(); // keyboard controls
 }
@@ -128,32 +118,30 @@ function update ()
     // collision detectors
     this.physics.add.collider(player, platforms)
     this.physics.add.collider(fruits, platforms)
+    this.physics.add.collider(bomb, platforms)
     this.physics.add.overlap(player,fruits, fruitCollect, null, this)
-    this.physics.add.collider(bombs, platforms)
-    this.physics.add.overlap(player,bombs, bombHit, null, this)
+    this.physics.add.overlap(player,bomb, bombHit, null, this)
 
     // player controls
     if (cursors.left.isDown) { player.setVelocityX(-600); player.anims.play('left', true); } // left
-
     else if (cursors.right.isDown) { player.setVelocityX(600) ; player.anims.play('right', true); } // right
-
     else { player.setVelocityX(0); player.anims.play('turn'); } // idle
-    
     if (cursors.up.isDown && player.body.touching.down) { player.setVelocityY(-1000); player.anims.play('turn'); } // jump
 }
 
 // called when overlap happens between player and fruits | line 83
-function fruitCollect(player, fruit) {
-    fruit.disableBody(true, true);  // remove fruit
-    
+function fruitCollect(player, fruit) 
+{
+    fruit.disableBody(true,true);  // remove fruit
+
     fruitsCollectedcount += 1;
     fruitsCollectedText += 1 ;
     fruitCollected.setText('Fruits Collected: ' + fruitsCollectedText);
     
-    if (fruits.countActive(true) < fruitCount )
+    if ( fruits.countActive(true) < fruitCount )
     {
         fruit.enableBody(true, Phaser.Math.Between(0,config.width), 0, true ,true);
-    } 
+    }
 
     // set player tint based on collected fruit
     if (fruitsCollectedcount == 1) { player.setTint(0xff4040) }
@@ -165,17 +153,11 @@ function fruitCollect(player, fruit) {
     if (fruitsCollectedcount == 7) { player.setTint(0x8000de); fruitsCollectedcount = 0}
 
     if (fruitsCollectedcount % 5 == 0) { player.setScale(player.scaleX * 1.1, player.scaleY * 1.1) }
-
-    // win condition
-    // if (fruitsCollectedText == 35)
-    // {
-    //     alert("Y O U  W O N !\nC O N G R A T S ! ! !")
-    //     fruitsCollectedText = 0;
-    // }
 }
 
 // loose condition | player collides with bomb
-function bombHit(player, bombs){
+function bombHit(player, bombs)
+{
     this.physics.pause();
     player.disableBody(true,true);
     let gameOverText = this.add.text(config.width / 2 - 200, config.height / 2 - 100, 'G A M E  O V E R', 
