@@ -100,13 +100,12 @@ function create ()
         child.x = Phaser.Math.Between(100,config.width - 10);
     });
 
-    bomb = this.physics.add.sprite(config.width / 2, 0, 'bomb');
+    bomb = this.physics.add.image(config.width / 2, 0, 'bomb');
     bomb.setScale(.07);
     bomb.setBounce(1,1);
     bomb.setVelocity(200,200);
     bomb.setCollideWorldBounds(true);
     
-
     fruitCollected = this.add.text(config.width / 1.5, 20, 'Fruits Collected: 0', 
     { fontSize: '40px', fill: '#ffd561' , fontStyle: 'bold' , fontFamily: 'impact'}); // fruits collected text
     fruitCollected.setShadow(2, 2, '#000', 2, true, true);
@@ -140,7 +139,7 @@ function fruitCollect(player, fruit)
     
     if ( fruits.countActive(true) < fruitCount )
     {
-        fruit.enableBody(true, Phaser.Math.Between(0,config.width), 0, true ,true);
+        fruit.enableBody(true, Phaser.Math.Between(0,config.width-10), 0, true ,true);
     }
 
     // set player tint based on collected fruit
